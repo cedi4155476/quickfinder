@@ -46,6 +46,12 @@ class MySettings(SettingManager):
         self.addSetting("refreshAuto", "bool", "project", True)
         self.addSetting("refreshDelay", "integer", "project", 15)
         self.addSetting("refreshLastAsked", "string", "project", "")
+        
+        # GeoAdmin settings
+        self.addSetting("geoadmin", "bool", "global", False)
+        self.addSetting("geoadminUrl", "string", "global", 
+                            'https://api3.geo.admin.ch/rest/services/api/SearchServer')
+        self.addSetting("geoadminReferer", "string", "global",  '')
 
         # OpenStreetMap settings
         self.addSetting("osm", "bool", "global", True)
@@ -53,7 +59,7 @@ class MySettings(SettingManager):
                         'http://nominatim.openstreetmap.org/search')
 
         # GeoMapFish settings
-        self.addSetting("geomapfish", "bool", "global", True)
+        self.addSetting("geomapfish", "bool", "global", False)
         self.addSetting("geomapfishUrl", "string", "global",
                         'http://mapfish-geoportal.demo-camptocamp.com/1.5/search')
         self.addSetting("geomapfishCrs", "string", "global", 'EPSG:3857')
