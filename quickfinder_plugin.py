@@ -32,6 +32,7 @@ from quickfinder.core.projectfinder import ProjectFinder, nDaysAgoIsoDate
 from quickfinder.core.osmfinder import OsmFinder
 from quickfinder.core.geomapfishfinder import GeomapfishFinder
 from quickfinder.core.geoadminfinder import GeoAdminFinder
+from quickfinder.core.coordinatesfinder import CoordinatesFinder
 from quickfinder.core.mysettings import MySettings
 from quickfinder.gui.configurationdialog import ConfigurationDialog
 from quickfinder.gui.refreshdialog import RefreshDialog
@@ -132,6 +133,7 @@ class quickFinder(QObject):
         self.finders['geomapfish'] = GeomapfishFinder(self)
         self.finders['osm'] = OsmFinder(self)
         self.finders['geoadmin'] = GeoAdminFinder(self)
+        self.finders['coordinates'] = CoordinatesFinder(self)
         self.finders['project'] = ProjectFinder(self)
         for key in self.finders.keys():
             self.finders[key].message.connect(self.displayMessage)

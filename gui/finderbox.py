@@ -36,6 +36,9 @@ from quickfinder.gui.resultmodel import ResultModel, GroupItem, ResultItem
 
 class FinderBox(QComboBox):
 
+    ZOOM_LOCALITY = 1000
+    ZOOM_COORDINATE = 100
+    
     running = False
     toFinish = 0
 
@@ -222,7 +225,13 @@ class FinderBox(QComboBox):
     def zoomToRubberBand(self):
         geom = self.rubber.asGeometry()
         if geom:
-            rect = geom.boundingBox()
-            rect.scale(1.5)
-            self.mapCanvas.setExtent(rect)
-            self.mapCanvas.refresh()
+            if geom.type() == 0:
+                rect = self.mapCanvas.mapSettings().computeExtentForScale(self.rubber.getPoint(0),
+                    FinderBox.ZOOM_LOCALITY, self.mapCanvas.mapRenderer().destinationCrs())
+                self.mapCanvas.setExtent(rect)
+                self.mapCanvas.refresh()
+            else:
+                rect = geom.boundingBox()
+                rect.scale(1.5)
+                self.mapCanvas.setExtent(rect)
+                self.mapCanvas.refresh()

@@ -52,6 +52,9 @@ class MySettings(SettingManager):
         self.addSetting("geoadminUrl", "string", "global", 
                             'https://api3.geo.admin.ch/rest/services/api/SearchServer')
         self.addSetting("geoadminReferer", "string", "global",  '')
+        
+        # Coordinates settings
+        self.addSetting("coordinates", "bool", "global", True)
 
         # OpenStreetMap settings
         self.addSetting("osm", "bool", "global", True)
