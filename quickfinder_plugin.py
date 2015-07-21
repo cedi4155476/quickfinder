@@ -133,7 +133,7 @@ class quickFinder(QObject):
         self.finders['geomapfish'] = GeomapfishFinder(self)
         self.finders['osm'] = OsmFinder(self)
         self.finders['geoadmin'] = GeoAdminFinder(self)
-        self.finders['coordinates'] = CoordinatesFinder(self)
+        self.finders['coordinate'] = CoordinatesFinder(self)
         self.finders['project'] = ProjectFinder(self)
         for key in self.finders.keys():
             self.finders[key].message.connect(self.displayMessage)

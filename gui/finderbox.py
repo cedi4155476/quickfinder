@@ -117,6 +117,7 @@ class FinderBox(QComboBox):
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
             self.clearSelection()
+        # TODO: Kategorie fuer verlauf
         QComboBox.keyPressEvent(self, event)
 
     def search(self):
@@ -197,7 +198,7 @@ class FinderBox(QComboBox):
             geometry = self.transformGeom(item)
             self.rubber.reset(geometry.type())
             self.rubber.setToGeometry(geometry, None)
-            self.zoomToRubberBand()
+            self.zoomToRubberBand(item.parent().name)
             return
 
         if isinstance(item, GroupItem):
@@ -208,7 +209,7 @@ class FinderBox(QComboBox):
                 for i in xrange(0, item.rowCount()):
                     geometry = self.transformGeom(item.child(i))
                     self.rubber.addGeometry(geometry, None)
-                self.zoomToRubberBand()
+                self.zoomToRubberBand(item.parent().name)
             return
 
         if item.__class__.__name__ == 'QStandardItem':
@@ -222,14 +223,20 @@ class FinderBox(QComboBox):
         geom.transform(QgsCoordinateTransform(src_crs, dest_crs))
         return geom
 
-    def zoomToRubberBand(self):
+    def zoomToRubberBand(self, type):
         geom = self.rubber.asGeometry()
         if geom:
             if geom.type() == 0:
-                rect = self.mapCanvas.mapSettings().computeExtentForScale(self.rubber.getPoint(0),
-                    FinderBox.ZOOM_LOCALITY, self.mapCanvas.mapRenderer().destinationCrs())
-                self.mapCanvas.setExtent(rect)
-                self.mapCanvas.refresh()
+                if type == 'coordinates':
+                    rect = self.mapCanvas.mapSettings().computeExtentForScale(self.rubber.getPoint(0),
+                        FinderBox.ZOOM_COORDINATE, self.mapCanvas.mapRenderer().destinationCrs())
+                    self.mapCanvas.setExtent(rect)
+                    self.mapCanvas.refresh()
+                else:
+                    rect = self.mapCanvas.mapSettings().computeExtentForScale(self.rubber.getPoint(0),
+                        FinderBox.ZOOM_LOCALITY, self.mapCanvas.mapRenderer().destinationCrs())
+                    self.mapCanvas.setExtent(rect)
+                    self.mapCanvas.refresh()
             else:
                 rect = geom.boundingBox()
                 rect.scale(1.5)

@@ -29,7 +29,7 @@ from quickfinder.core.httpfinder import HttpFinder
 
 class CoordinatesFinder(HttpFinder):
 
-    name = 'coordinates'
+    name = 'coordinate'
 
     def __init__(self, parent):
         HttpFinder.__init__(self, parent)
@@ -37,13 +37,16 @@ class CoordinatesFinder(HttpFinder):
     def start(self, crd, bbox=None):
         super(CoordinatesFinder, self).start(crd, bbox)
 
-        x, y = crd.split(',')
-        wkt = 'POINT(%s %s)' % (x, y)
-        geometry = QgsGeometry.fromWkt(wkt)
-        
-        self.resultFound.emit(self,
-                                    "a",
-                                    str(crd),
-                                    geometry,
-                                    self.parent().iface.mapCanvas().mapRenderer().destinationCrs())
+        try:
+            x, y = crd.split(',')
+            wkt = 'POINT(%s %s)' % (x, y)
+            geometry = QgsGeometry.fromWkt(wkt)
+            
+            self.resultFound.emit(self,
+                                        "coordinates",
+                                        str(crd),
+                                        geometry,
+                                        self.parent().iface.mapCanvas().mapRenderer().destinationCrs())
+        except:
+            pass
         self._finish()

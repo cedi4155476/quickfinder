@@ -125,12 +125,23 @@ class ResultModel(QStandardItemModel):
 
     def addResult(self, category, layer='', value='', geometry=None, srid=None):
         root_item = self.invisibleRootItem()
-
         category_item = self._childItem(root_item, category, CategoryItem)
 
         if layer == '':
             return
-        layer_item = self._childItem(category_item, layer, LayerItem)
+        elif layer == 'coordinates':
+            layer_item = self._childItem(category_item, value)
+            if value == '':
+                return
+            category_item.increment()
+
+            item = ResultItem(value)
+            item.geometry = geometry
+            item.srid = srid
+            category_item.appendRow(item)
+            return
+        else:
+            layer_item = self._childItem(category_item, layer, LayerItem)
 
         if value == '':
             return
