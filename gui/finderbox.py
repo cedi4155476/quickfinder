@@ -23,7 +23,7 @@
 #
 #---------------------------------------------------------------------
 
-from PyQt4.QtCore import Qt, QCoreApplication, pyqtSignal, QEventLoop
+from PyQt4.QtCore import Qt, QCoreApplication, pyqtSignal, QEventLoop, QTimer
 from PyQt4.QtGui import (QComboBox, QSizePolicy, QTreeView, QIcon, QApplication, QColor,
                          QPushButton, QCursor, QHBoxLayout)
 
@@ -31,7 +31,7 @@ from qgis.core import QgsGeometry, QgsCoordinateReferenceSystem, QgsCoordinateTr
 from qgis.gui import QgsRubberBand
 
 from quickfinder.core.mysettings import MySettings
-from quickfinder.gui.resultmodel import ResultModel, GroupItem, ResultItem
+from quickfinder.gui.resultmodel import ResultModel, GroupItem, ResultItem, HistoryItem
 
 
 class FinderBox(QComboBox):
@@ -57,13 +57,14 @@ class FinderBox(QComboBox):
 
         QComboBox.__init__(self, parent)
         self.setEditable(True)
-        self.setInsertPolicy(QComboBox.InsertAtTop)
+        self.setInsertPolicy(QComboBox.NoInsert)
         self.setMinimumHeight(27)
         self.setSizePolicy(QSizePolicy.Expanding,
                            QSizePolicy.Fixed)
 
         self.insertSeparator(0)
         self.lineEdit().returnPressed.connect(self.search)
+        self.lineEdit().textEdited.connect(self.editTextChanged)
 
         self.resultView = QTreeView()
         self.resultView.setHeaderHidden(True)
@@ -100,6 +101,10 @@ class FinderBox(QComboBox):
         padding = buttonSize.width()  # + frameWidth + 1
         self.lineEdit().setStyleSheet('QLineEdit {padding-right: %dpx; }' % padding)
 
+        self.autosearch = QTimer()
+        self.autosearch.setSingleShot(True)
+        self.autosearch.timeout.connect(self.search)
+
     def __del__(self):
         if self.rubber:
             self.iface.mapCanvas().scene().removeItem(self.rubber)
@@ -117,16 +122,22 @@ class FinderBox(QComboBox):
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
             self.clearSelection()
-        # TODO: Kategorie fuer verlauf
         QComboBox.keyPressEvent(self, event)
+    
+    def editTextChanged(self, e):
+        self.autosearch.stop()
+        self.autosearch.start(5000)
 
     def search(self):
+        self.autosearch.stop()
         if self.running:
             return
 
         toFind = self.lineEdit().text()
         if not toFind or toFind == '':
             return
+
+        self.resultModel.addHistory(toFind)
 
         self.running = True
         self.searchStarted.emit()
@@ -154,6 +165,7 @@ class FinderBox(QComboBox):
 
         # For case there is no finder activated
         self.finished(None)
+        self.showPopup()
 
     def stop(self):
         self.findersToStart = []
@@ -170,8 +182,10 @@ class FinderBox(QComboBox):
         self.resultModel.addEllipsys(finder.name, layername)
 
     def finished(self, finder):
+        text = self.resultModel.getText()
         if len(self.findersToStart) > 0:
             return
+        self.setEditText(text)
         for finder in self.finders.values():
             if finder.isRunning():
                 return
@@ -182,6 +196,7 @@ class FinderBox(QComboBox):
         self.resultModel.setLoading(False)
 
         QCoreApplication.processEvents(QEventLoop.ExcludeUserInputEvents)
+        self.setEditText(text)
 
     def itemActivated(self, index):
         item = self.resultModel.itemFromIndex(index)
@@ -193,6 +208,12 @@ class FinderBox(QComboBox):
             self.showItem(item)
 
     def showItem(self, item):
+        if isinstance(item, ResultItem) and isinstance(item.parent(), HistoryItem):
+            self.clearSelection()
+            self.setEditText(item.name)
+            self.hidePopup()
+            return
+        
         if isinstance(item, ResultItem):
             self.resultModel.setSelected(item, self.resultView.palette())
             geometry = self.transformGeom(item)
@@ -201,7 +222,7 @@ class FinderBox(QComboBox):
             self.zoomToRubberBand(item.parent().name)
             return
 
-        if isinstance(item, GroupItem):
+        if isinstance(item, GroupItem) and not isinstance(item, HistoryItem):
             child = item.child(0)
             if isinstance(child, ResultItem):
                 self.resultModel.setSelected(item, self.resultView.palette())

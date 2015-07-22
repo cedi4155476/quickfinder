@@ -52,6 +52,10 @@ class GroupItem(BaseItem):
     def increment(self):
         self.count += 1
         self.emitDataChanged()
+    
+    def decrement(self):
+        self.count -= 1
+        self.emitDataChanged()
 
     def data(self, role):
         if role == Qt.DisplayRole:
@@ -63,6 +67,10 @@ class GroupItem(BaseItem):
 class CategoryItem(GroupItem):
     def __init__(self, name):
         super(CategoryItem, self).__init__(name)
+
+class HistoryItem(GroupItem):
+    def __init__(self, name):
+        super(HistoryItem, self).__init__(name)
 
 class LayerItem(GroupItem):
    def __init__(self, name):
@@ -95,12 +103,32 @@ class ResultModel(QStandardItemModel):
             icon = QIcon()
         item.setIcon(icon)
 
+    def getText(self):
+        root = self.invisibleRootItem()
+        history_class = self._childItem(root, 'verlauf', HistoryItem)
+        text = history_class.child(history_class.count-1)
+        return text.name
+    
+    def addHistory(self, name):
+        root = self.invisibleRootItem()
+        history = self._childItem(root, 'verlauf', HistoryItem)
+        for i in xrange(0, history.count):
+            if history.child(i).name == name:
+                history.removeRow(history.child(i).row())
+                history.decrement()
+                break
+        history.increment()
+        item = ResultItem(name)
+        history.appendRow(item)
+
     def truncateHistory(self, limit):
         root = self.invisibleRootItem()
-        for i in xrange(root.rowCount() - 1, limit - 1, -1):
+        for i in xrange(root.rowCount() - 1, -1, -1):
             item = root.child(i)
-            if not isinstance(item, CategoryItem):
-                root.removeRow(item.row())
+            if isinstance(item, HistoryItem):
+                if item.count > limit:
+                    item.removeRow(item.child(i).row())
+                    item.decrement()
 
     def clearResults(self):
         root = self.invisibleRootItem()
@@ -129,10 +157,7 @@ class ResultModel(QStandardItemModel):
 
         if layer == '':
             return
-        elif layer == 'coordinates':
-            layer_item = self._childItem(category_item, value)
-            if value == '':
-                return
+        elif layer == 'coordinates' and not value == '':
             category_item.increment()
 
             item = ResultItem(value)
@@ -140,6 +165,15 @@ class ResultModel(QStandardItemModel):
             item.srid = srid
             category_item.appendRow(item)
             return
+        elif category == 'verlauf':
+            category_item.increment()
+            
+            item = ResultItem(layer)
+            item.geometry = None
+            item.srid = None
+            category_item.appendRow(item)
+            return
+            
         else:
             layer_item = self._childItem(category_item, layer, LayerItem)
 

@@ -38,7 +38,7 @@ class CoordinatesFinder(HttpFinder):
     def start(self, crd, bbox=None):
         super(CoordinatesFinder, self).start(crd, bbox)
 
-        lvdd = re.match(u'^([0-9]+\\.?[0-9]*)\u00B0?,?[\\s]*([0-9]+\\.?[0-9]*)\u00B0?$', crd)
+        lvdd = re.match(u'^([0-9]+\\.?[0-9]*)\u00B0?[,\s]\s*([0-9]+\\.?[0-9]*)\u00B0?$', crd)
         dm = re.match(u'^([0-9]+)\u00B0([0-9]+\\.?[0-9]*)[\u2032\u0027\u02BC\u2019]([NnSsEeWw]),?[\\s]*([0-9]+)\u00B0([0-9]+\\.?[0-9]*)[\u2032\u0027\u02BC\u2019]([NnSsEeWw])$', crd)
         dms = re.match(u'^([0-9]+)\u00B0([0-9]+)[\u2032\u0027\u02BC\u2019]([0-9]+\\.?[0-9]*)\u2033([NnSsEeWw]),?[\\s]*([0-9]+)\u00B0([0-9]+)[\u2032\u0027\u02BC\u2019]([0-9]+\\.?[0-9]*)\u2033([NnSsEeWw])$', crd)
 
@@ -51,12 +51,17 @@ class CoordinatesFinder(HttpFinder):
                 crs = 21781
             elif (long >= 2450000 and long <= 2850000) and (lat >= 1050000 and lat <= 1300000):
                 crs = 2056
+            else:
+                self._finish()
+                return
             geometry = QgsGeometry.fromPoint(QgsPoint(long,  lat))
+            print crd
             self.resultFound.emit(self,
                                         "coordinates",
                                         crd,
                                         geometry,
                                         crs)
+            self._finish()
         elif dm:
             if (re.match('^[NnSs]$', dm.group(3)) and re.match('^[EeWw]$', dm.group(6))) or (re.match('^[EeWw]$', dm.group(3)) and re.match('^[NnSs]$', dm.group(6))):
                 if re.match('^[NnSs]$', dm.group(3)):
@@ -84,6 +89,7 @@ class CoordinatesFinder(HttpFinder):
                                         crd,
                                         geometry,
                                         crs)
+                self._finish()
         elif dms:
             if (re.match('^[NnSs]$', dms.group(4)) and re.match('^[EeWw]$', dms.group(8))) or (re.match('^[EeWw]$', dms.group(4)) and re.match('^[NnSs]$', dms.group(8))):
                 if re.match('^[NnSs]$', dms.group(4)):
@@ -115,4 +121,5 @@ class CoordinatesFinder(HttpFinder):
                                         crd,
                                         geometry,
                                         crs)
+                self._finish()
         self._finish()
